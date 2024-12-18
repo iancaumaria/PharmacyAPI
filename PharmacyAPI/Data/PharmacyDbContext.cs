@@ -16,7 +16,20 @@ namespace PharmacyAPI.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            // Relație Many-to-Many pentru Order și Product prin OrderDetail
+            // Relație One-to-Many: Product -> Category
+            modelBuilder.Entity<Product>()
+                .HasOne(p => p.Category)
+                .WithMany(c => c.Products)
+                .HasForeignKey(p => p.CategoryId)
+                .OnDelete(DeleteBehavior.Cascade); // Dacă ștergi o categorie, șterge toate produsele asociate
+
+            // Relație One-to-Many: Order -> User
+            modelBuilder.Entity<Order>()
+                .HasOne(o => o.User)
+                .WithMany(u => u.Orders)
+                .HasForeignKey(o => o.UserId);
+
+            // Relație Many-to-Many prin OrderDetail
             modelBuilder.Entity<OrderDetail>()
                 .HasOne(od => od.Order)
                 .WithMany(o => o.OrderDetails)
@@ -27,5 +40,7 @@ namespace PharmacyAPI.Data
                 .WithMany(p => p.OrderDetails)
                 .HasForeignKey(od => od.ProductId);
         }
+
+
     }
 }

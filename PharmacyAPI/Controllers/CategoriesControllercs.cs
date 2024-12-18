@@ -21,10 +21,20 @@ namespace PharmacyAPI.Controllers
 
         // GET: api/Categories
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Category>>> GetCategories()
+        public async Task<ActionResult<IEnumerable<Category>>> GetCategories(int? page, int? pageSize)
         {
-            return await _context.Categories.ToListAsync();
+            var query = _context.Categories.AsQueryable();
+
+            if (page.HasValue && pageSize.HasValue)
+            {
+                query = query.Skip((page.Value - 1) * pageSize.Value)
+                             .Take(pageSize.Value);
+            }
+
+            var categories = await query.ToListAsync();
+            return Ok(categories);
         }
+
 
         // GET: api/Categories/5
         [HttpGet("{id}")]
@@ -37,7 +47,8 @@ namespace PharmacyAPI.Controllers
                 return NotFound();
             }
 
-            return category;
+            return Ok(new { data = category });
+
         }
 
         // PUT: api/Categories/5
@@ -70,35 +81,49 @@ namespace PharmacyAPI.Controllers
             return NoContent();
         }
 
+        private bool CategoryExists(int id)
+        {
+            throw new NotImplementedException();
+        }
+
         // POST: api/Categories
         [HttpPost]
         public async Task<ActionResult<Category>> PostCategory(Category category)
         {
+            if (string.IsNullOrWhiteSpace(category.Name))
+            {
+                return BadRequest(new { message = "Category name cannot be empty." });
+            }
+
             _context.Categories.Add(category);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetCategory", new { id = category.Id }, category);
+            return CreatedAtAction(nameof(GetCategory), new { id = category.Id }, category);
         }
 
         // DELETE: api/Categories/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCategory(int id)
         {
-            var category = await _context.Categories.FindAsync(id);
+            var category = await _context.Categories
+                                         .Include(c => c.Products)
+                                         .FirstOrDefaultAsync(c => c.Id == id);
+
             if (category == null)
             {
-                return NotFound();
+                return NotFound(new { message = $"Category with ID {id} not found." });
+            }
+
+            if (category.Products.Any())
+            {
+                return BadRequest(new { message = "Cannot delete category with associated products." });
             }
 
             _context.Categories.Remove(category);
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return Ok(new { message = "Category deleted successfully." });
         }
 
-        private bool CategoryExists(int id)
-        {
-            return _context.Categories.Any(e => e.Id == id);
-        }
     }
 }

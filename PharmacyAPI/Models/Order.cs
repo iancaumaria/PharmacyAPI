@@ -13,8 +13,10 @@ namespace PharmacyAPI.Models
 
         [Required]
         public int UserId { get; set; } // Legătură cu User
-        public User User { get; set; }
+        public User? User { get; set; }
 
-        public ICollection<OrderDetail> OrderDetails { get; set; }
+
+        public ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
+
     }
 }
