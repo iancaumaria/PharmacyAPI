@@ -22,7 +22,7 @@ namespace PharmacyAPI.Models
         // Relație cu tabela Categories
         public int CategoryId { get; set; }
 
-        // Fă proprietatea de navigare opțională
+        // Fă proprietatea de navigare nullable
         public Category? Category { get; set; }
 
         // Fă colecția opțională

@@ -83,7 +83,7 @@ namespace PharmacyAPI.Controllers
 
         private bool CategoryExists(int id)
         {
-            throw new NotImplementedException();
+            return _context.Categories.Any(c => c.Id == id);
         }
 
         // POST: api/Categories

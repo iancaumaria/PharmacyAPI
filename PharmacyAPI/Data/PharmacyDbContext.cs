@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PharmacyAPI.Models;
+using PharmacyAPI.Data;
 namespace PharmacyAPI.Data
 {
     public class PharmacyDbContext : DbContext
@@ -11,6 +12,7 @@ namespace PharmacyAPI.Data
         public DbSet<Category> Categories { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderDetail> OrderDetails { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
