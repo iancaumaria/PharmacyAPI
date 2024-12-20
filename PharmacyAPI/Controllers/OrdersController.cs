@@ -58,11 +58,25 @@ namespace PharmacyAPI.Controllers
                 return BadRequest(new { message = $"User with ID {order.UserId} does not exist." });
             }
 
+            // Adaugă comanda în baza de date
             _context.Orders.Add(order);
+            await _context.SaveChangesAsync();
+
+            // Creează o notificare automată pentru utilizator
+            var notification = new Notification
+            {
+                UserId = order.UserId,
+                Message = $"Your order with ID {order.Id} has been placed successfully.",
+                CreatedDate = DateTime.UtcNow,
+                IsSent = false
+            };
+
+            _context.Notifications.Add(notification);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction(nameof(GetOrder), new { id = order.Id }, order);
         }
+
 
         // PUT: api/Orders/5
         [HttpPut("{id}")]

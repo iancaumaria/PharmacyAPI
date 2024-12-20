@@ -12,7 +12,7 @@ namespace PharmacyAPI.Models
         public int UserId { get; set; } // Foreign Key către User
 
         [ForeignKey("UserId")]
-        public User User { get; set; } // Proprietatea de navigare
+        public User? User { get; set; } // Proprietatea de navigare
 
         [Required]
         [MaxLength(255)]

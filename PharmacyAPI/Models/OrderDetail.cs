@@ -12,13 +12,13 @@ namespace PharmacyAPI.Models
         public int OrderId { get; set; } // Foreign Key către Order
 
         [ForeignKey("OrderId")]
-        public Order Order { get; set; } // Proprietatea de navigare
+        public Order? Order { get; set; } // Proprietatea de navigare
 
         [Required]
         public int ProductId { get; set; } // Foreign Key către Product
 
         [ForeignKey("ProductId")]
-        public Product Product { get; set; } // Proprietatea de navigare
+        public Product? Product { get; set; } // Proprietatea de navigare
 
         [Required]
         [Range(1, int.MaxValue, ErrorMessage = "Quantity must be at least 1.")]
