@@ -24,8 +24,8 @@ namespace PharmacyAPI.Controllers
         public async Task<ActionResult<IEnumerable<Order>>> GetOrders()
         {
             return await _context.Orders
-                .Include(o => o.User) // Include relația cu User
-                .Include(o => o.OrderDetails) // Include relația cu OrderDetails
+                .Include(o => o.User)
+                .Include(o => o.OrderDetails)
                 .ToListAsync();
         }
 
@@ -36,7 +36,7 @@ namespace PharmacyAPI.Controllers
             var order = await _context.Orders
                 .Include(o => o.User)
                 .Include(o => o.OrderDetails)
-                .ThenInclude(od => od.Product) // Include produsul pentru fiecare detaliu de comandă
+                .ThenInclude(od => od.Product)
                 .FirstOrDefaultAsync(o => o.Id == id);
 
             if (order == null)
@@ -51,18 +51,15 @@ namespace PharmacyAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<Order>> PostOrder(Order order)
         {
-            // Validare suplimentară: Verifică dacă utilizatorul există
             var userExists = await _context.Users.AnyAsync(u => u.Id == order.UserId);
             if (!userExists)
             {
                 return BadRequest(new { message = $"User with ID {order.UserId} does not exist." });
             }
 
-            // Adaugă comanda în baza de date
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();
 
-            // Creează o notificare automată pentru utilizator
             var notification = new Notification
             {
                 UserId = order.UserId,
@@ -77,7 +74,6 @@ namespace PharmacyAPI.Controllers
             return CreatedAtAction(nameof(GetOrder), new { id = order.Id }, order);
         }
 
-
         // PUT: api/Orders/5
         [HttpPut("{id}")]
         public async Task<IActionResult> PutOrder(int id, Order order)
@@ -87,7 +83,6 @@ namespace PharmacyAPI.Controllers
                 return BadRequest(new { message = "Order ID mismatch." });
             }
 
-            // Validare suplimentară: Verifică dacă utilizatorul există
             var userExists = await _context.Users.AnyAsync(u => u.Id == order.UserId);
             if (!userExists)
             {
@@ -120,7 +115,7 @@ namespace PharmacyAPI.Controllers
         public async Task<IActionResult> DeleteOrder(int id)
         {
             var order = await _context.Orders
-                .Include(o => o.OrderDetails) // Include detaliile comenzii
+                .Include(o => o.OrderDetails)
                 .FirstOrDefaultAsync(o => o.Id == id);
 
             if (order == null)
@@ -128,7 +123,6 @@ namespace PharmacyAPI.Controllers
                 return NotFound(new { message = $"Order with ID {id} not found." });
             }
 
-            // Verifică dacă există detalii asociate pentru comandă
             if (order.OrderDetails.Any())
             {
                 return BadRequest(new { message = "Cannot delete an order with associated order details." });
@@ -140,10 +134,62 @@ namespace PharmacyAPI.Controllers
             return Ok(new { message = "Order deleted successfully." });
         }
 
+        // PATCH: api/Orders/5/status
+        [HttpPatch("{id}/status")]
+        public async Task<IActionResult> UpdateOrderStatus(int id, [FromBody] string status)
+        {
+            var order = await _context.Orders.FindAsync(id);
+            if (order == null)
+            {
+                return NotFound(new { message = $"Order with ID {id} not found." });
+            }
+
+            order.Status = status;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+
+                var notification = new Notification
+                {
+                    UserId = order.UserId,
+                    Message = $"Your order with ID {id} is now {status}.",
+                    CreatedDate = DateTime.UtcNow,
+                    IsSent = false
+                };
+
+                _context.Notifications.Add(notification);
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                return BadRequest(new { message = $"Failed to update order status: {ex.Message}" });
+            }
+
+            return Ok(new { message = "Order status updated successfully." });
+        }
+
+        // GET: api/Orders/notifications/{userId}
+        [HttpGet("notifications/{userId}")]
+        public async Task<ActionResult<IEnumerable<Notification>>> GetUserNotifications(int userId)
+        {
+            var notifications = await _context.Notifications
+                .Where(n => n.UserId == userId && !n.IsSent)
+                .ToListAsync();
+
+            foreach (var notification in notifications)
+            {
+                notification.IsSent = true;
+            }
+
+            await _context.SaveChangesAsync();
+
+            return Ok(notifications);
+        }
+
         private bool OrderExists(int id)
         {
             return _context.Orders.Any(e => e.Id == id);
         }
     }
 }
-

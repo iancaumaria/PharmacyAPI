@@ -15,7 +15,7 @@ namespace PharmacyAPI.Models
         public int UserId { get; set; } // Legătură cu User
         public User? User { get; set; }
 
-
+        public string Status { get; set; } = "Pending"; // Valoare implicită
         public ICollection<OrderDetail> OrderDetails { get; set; } 
 
     }
